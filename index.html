@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Toi, en toutes lettres</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Caveat:wght@600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+/* VOICE  tendre, nocturne, peu de mots : une porte qui ne s'ouvre qu'avec le bon mot
+   IDEA   l'encadré final du recueil, sous le ciel du film : des cases à remplir à la main
+   PICTURE la constellation du Cancer en or, qui s'allume lettre après lettre et se trace quand le mot est juste ;
+          puis un petit rituel animé : les écouteurs qui se dessinent, le téléphone qui se tourne, et le film part
+   COLOUR nuit bleue du film, encre ivoire, or des étoiles ; le carmin du livre pour la réussite
+   TYPE   Bodoni Moda (intertitres du livre), Cormorant Garamond (texte), Caveat (les lettres écrites à la main)
+   LAYOUT une seule colonne centrée, plein écran ; le film remplace tout quand la porte s'ouvre */
+:root{color-scheme:dark;--bg:#070d1a;--ink:#f4ead8;--dim:#9aa3b5;--gold:#e3bd72;--carmin:#c2414f;--box:#f6efe1}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(ellipse 120% 80% at 50% 0%,#13213d 0%,#0a1224 45%,#05080f 100%) fixed;color:var(--ink);font:18px/1.5 "Cormorant Garamond",Georgia,serif;overflow-x:clip}
+body.rite,body.film{overflow:hidden}
+canvas#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;transition:opacity 1.4s}
+body.rite canvas#sky{opacity:.7}
+body.film canvas#sky{opacity:0}
+main{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 max(5vw,18px) max(6vh,28px);text-align:center;transition:opacity .9s,transform .9s,filter .9s}
+main.away{opacity:0;transform:translateY(-14px);filter:blur(5px);pointer-events:none}
+.kicker{font:500 13px "Bodoni Moda",serif;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin:0 0 14px;padding-left:.32em}
+h1{font:500 clamp(30px,6vw,46px)/1.1 "Bodoni Moda",serif;letter-spacing:.06em;margin:0 0 14px;text-wrap:balance}
+.riddle{max-width:30em;margin:0 auto 12px;font-size:clamp(19px,2.6vw,22px);line-height:1.45;font-style:italic;color:#e5dccb}
+.consigne{margin:0 auto 24px;font:400 12px "Bodoni Moda",serif;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);padding-left:.22em}
+.boxes{position:relative;display:flex;gap:clamp(5px,1.2vw,9px);justify-content:center;margin:0 auto 18px;cursor:text}
+.b{width:clamp(30px,8.4vw,48px);height:clamp(40px,10.8vw,62px);border:1.5px solid #8c7550;border-radius:4px;background:var(--box);display:grid;place-items:center;font:600 clamp(26px,7vw,40px)/1 Caveat,cursive;color:#22346e;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .25s,border-color .25s,box-shadow .25s}
+.b.cur{border-color:var(--gold);box-shadow:0 0 0 3px rgba(227,189,114,.35),0 6px 18px rgba(0,0,0,.35)}
+.b.ok{border-color:var(--carmin);color:#9b1d2c}
+.boxes.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+#word{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;background:transparent;color:transparent;caret-color:transparent;text-transform:uppercase}
+.msg{min-height:3em;margin:0 auto;max-width:28em;font-size:19px;color:var(--dim);text-wrap:balance}
+.msg b{color:var(--ink);font-weight:500}
+.row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+button{font:500 15px "Bodoni Moda",serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);background:rgba(255,255,255,.04);border:1px solid rgba(227,189,114,.45);border-radius:999px;min-height:46px;padding:0 22px;cursor:pointer}
+button:hover{background:rgba(227,189,114,.12)}
+button:focus-visible,.boxes:focus-within .b.cur{outline:2px solid var(--gold);outline-offset:3px}
+button.main{background:var(--gold);color:#1b1408;border-color:var(--gold)}
+.load{margin-top:18px;font:400 13px "Bodoni Moda",serif;letter-spacing:.08em;color:#6f7890;font-variant-numeric:tabular-nums}
+/* le rituel : les écouteurs, puis le téléphone qu'on tourne */
+#rite{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4vh 6vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .9s}
+#rite.on{opacity:1;pointer-events:auto}
+.stage{position:relative;width:min(74vw,300px,44dvh);aspect-ratio:1/1.2}
+.stage svg{position:absolute;left:0;width:100%;overflow:visible}
+#casque{top:14%;transition:transform 1.05s cubic-bezier(.65,0,.35,1);transform-origin:50% 50%}
+#casque.small{transform:translateY(-44%) scale(.4)}
+#tel{top:24%;opacity:0}
+.rtxt{min-height:5.4em;margin-top:clamp(4px,1.5vh,14px)}
+#rt{margin:0;font:italic 400 clamp(25px,5.6vw,34px)/1.2 "Cormorant Garamond",serif;color:var(--ink);text-wrap:balance}
+#rs{margin:10px 0 0;font:400 12px "Bodoni Moda",serif;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);padding-left:.24em}
+#force{background:none;border:0;min-height:44px;text-transform:none;letter-spacing:0;font:italic 400 17px "Cormorant Garamond",serif;color:var(--dim);text-decoration:underline;text-underline-offset:4px;opacity:0;transition:opacity 1s}
+#force.show{opacity:1}
+#force:hover{background:none;color:var(--ink)}
+/* le film */
+#cinema{position:fixed;inset:0;z-index:3;background:#000;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity 1.6s}
+#cinema.on{opacity:1;pointer-events:auto}
+video{width:100%;height:100%;max-height:100dvh;object-fit:contain;background:#000}
+.over{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:18px;padding:0 6vw;text-align:center;background:radial-gradient(ellipse at center,rgba(7,13,26,.6),rgba(0,0,0,.88));transition:opacity .8s}
+.over.hide{opacity:0;pointer-events:none}
+.over p{margin:0;font:italic 400 clamp(22px,4vw,30px) "Cormorant Garamond",serif;color:var(--ink)}
+.over .pct{font:400 14px "Bodoni Moda",serif;letter-spacing:.1em;color:var(--dim);font-style:normal;font-variant-numeric:tabular-nums}
+.again{position:absolute;right:16px;bottom:16px;opacity:.8}
+@media (prefers-reduced-motion:reduce){.boxes.shake{animation:none}#cinema,main,#rite{transition:none}}
+</style></head><body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<main id="gate">
+  <p class="kicker">Toi, en toutes lettres</p>
+  <h1>Une dernière porte</h1>
+  <p class="riddle">Avant le vin, avant l’aveu,<br>Un long voyage, sur l’écran,<br>Nous fit voguer, tous deux, un peu :<br>Son nom dort au neuvième chant.</p>
+  <p class="consigne">Ce nom ouvre la suite. Sept lettres.</p>
+  <label class="boxes" id="boxes" for="word">
+    <span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span><span class="b"></span>
+    <input id="word" type="text" maxlength="7" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" inputmode="text" aria-label="Le mot secret, en sept lettres">
+  </label>
+  <p class="msg" id="msg" aria-live="polite">Touche les cases pour écrire.</p>
+  <div class="row"><button type="button" id="hint">Un indice ?</button></div>
+  <p class="load" id="load">Le film se prépare…</p>
+</main>
+
+<section id="rite" aria-live="polite">
+  <div class="stage">
+    <!-- les écouteurs -->
+    <svg id="casque" viewBox="0 0 240 210" aria-hidden="true">
+      <g id="cq">
+        <g id="wl" fill="none" stroke="#e3bd72" stroke-width="2.2" stroke-linecap="round">
+          <path d="M34 131.9 A14 14 0 0 0 34 156.1" vector-effect="non-scaling-stroke"/><path d="M34 131.9 A14 14 0 0 0 34 156.1" vector-effect="non-scaling-stroke"/><path d="M34 131.9 A14 14 0 0 0 34 156.1" vector-effect="non-scaling-stroke"/>
+        </g>
+        <g transform="translate(240 0) scale(-1 1)"><g id="wr" fill="none" stroke="#e3bd72" stroke-width="2.2" stroke-linecap="round">
+          <path d="M34 131.9 A14 14 0 0 0 34 156.1" vector-effect="non-scaling-stroke"/><path d="M34 131.9 A14 14 0 0 0 34 156.1" vector-effect="non-scaling-stroke"/><path d="M34 131.9 A14 14 0 0 0 34 156.1" vector-effect="non-scaling-stroke"/>
+        </g></g>
+        <path id="band" d="M57 106 C55 46 92 24 120 24 C148 24 185 46 183 106" fill="none" stroke="#e3bd72" stroke-width="7.5" stroke-linecap="round"/>
+        <path id="band2" d="M66 104 C66 56 96 36 120 36 C144 36 174 56 174 104" fill="none" stroke="#f4ead8" stroke-opacity=".32" stroke-width="1.6" stroke-linecap="round"/>
+        <g id="cl">
+          <rect x="52.5" y="98" width="9" height="18" rx="3" fill="#c9a35d"/>
+          <rect x="62" y="116" width="18" height="56" rx="8" fill="#2a3556"/>
+          <rect x="41" y="112" width="32" height="64" rx="14" fill="#f4ead8" stroke="#e3bd72" stroke-width="2.5"/>
+          <circle cx="56" cy="144" r="3.2" fill="#c2414f"/>
+        </g>
+        <g id="cr"><g transform="translate(240 0) scale(-1 1)">
+          <rect x="52.5" y="98" width="9" height="18" rx="3" fill="#c9a35d"/>
+          <rect x="62" y="116" width="18" height="56" rx="8" fill="#2a3556"/>
+          <rect x="41" y="112" width="32" height="64" rx="14" fill="#f4ead8" stroke="#e3bd72" stroke-width="2.5"/>
+          <circle cx="56" cy="144" r="3.2" fill="#c2414f"/>
+        </g></g>
+        <g id="n1" fill="#e3bd72" stroke="#e3bd72" stroke-linecap="round" opacity="0"><ellipse rx="4.6" ry="3.4" transform="rotate(-22)" stroke="none"/><path d="M4.1 -1.2 V-19 C10 -16 12 -12 9 -6" fill="none" stroke-width="1.8"/></g>
+        <g id="n2" fill="#e3bd72" stroke="#e3bd72" stroke-linecap="round" opacity="0"><ellipse rx="4.6" ry="3.4" transform="rotate(-22)" stroke="none"/><path d="M4.1 -1.2 V-19 C10 -16 12 -12 9 -6" fill="none" stroke-width="1.8"/></g>
+      </g>
+    </svg>
+    <!-- le téléphone qu'on tourne -->
+    <svg id="tel" viewBox="-120 -120 240 240" aria-hidden="true">
+      <defs>
+        <clipPath id="ecran"><rect x="-29" y="-52" width="58" height="104" rx="5"/></clipPath>
+        <linearGradient id="ciel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2350"/><stop offset=".55" stop-color="#b8607a"/><stop offset="1" stop-color="#f3ab6c"/></linearGradient>
+      </defs>
+      <path id="arc" d="M64.3 -54 A84 84 0 0 0 -64.3 -54" fill="none" stroke="#e3bd72" stroke-width="3" stroke-linecap="round"/>
+      <path id="arh" d="M-62 -64.8 L-64.3 -54 L-54.1 -58.1" fill="none" stroke="#e3bd72" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <g id="ph">
+        <rect x="36" y="-34" width="3" height="18" rx="1.5" fill="#c9a35d"/>
+        <rect x="-36" y="-64" width="72" height="128" rx="13" fill="#0c1324" stroke="#e3bd72" stroke-width="3"/>
+        <rect x="-29" y="-52" width="58" height="104" rx="5" fill="#03060c"/>
+        <rect x="-9" y="-59.5" width="18" height="3" rx="1.5" fill="#e3bd72" opacity=".55"/>
+        <g clip-path="url(#ecran)"><g id="film">
+          <rect x="-29" y="-16.3" width="58" height="32.6" fill="url(#ciel)"/>
+          <circle id="sun" cx="0" cy="4" r="5.5" fill="#ffe2a6"/>
+          <path d="M-29 5 L-21 -3 L-15 1 L-8 -6 L-1 2 L6 -2 L13 3 L20 -5 L29 2 L29 5Z" fill="#4d3554"/>
+          <rect x="-29" y="5" width="58" height="11.3" fill="#6b4a6e"/>
+          <rect x="-3" y="5.5" width="6" height="10" fill="#ffd59a" opacity=".4"/>
+          <path d="M-12 8 h6 M5 10 h9 M-7 12.5 h5 M14 13.5 h5" stroke="#ffd9a8" stroke-width=".8" opacity=".7"/>
+          <g id="play"><circle r="7" fill="rgba(5,8,15,.5)" stroke="#f4ead8" stroke-width="1.2"/><path d="M-2.4 -4 L4.4 0 L-2.4 4Z" fill="#f4ead8"/></g>
+        </g></g>
+      </g>
+    </svg>
+  </div>
+  <div class="rtxt" id="rtxt"><p id="rt"></p><p id="rs"></p></div>
+  <button type="button" id="force" hidden>Rotation verrouillée ? Lance le film ici.</button>
+</section>
+
+<section id="cinema" aria-label="Le film">
+  <video id="v" playsinline preload="auto" src="amorce.mp4"></video>
+  <div class="over hide" id="over"><p id="op">Le film arrive…</p><button type="button" class="main" id="go" hidden>Lancer le film</button><span class="pct" id="pct"></span></div>
+  <button type="button" class="again" id="again" hidden>Revoir</button>
+</section>
+<script>
+{
+const $ = id => document.getElementById(id);
+const cl = x => Math.max(0, Math.min(1, x)), seg = (t, a, b) => cl((t - a) / (b - a));
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, eo = x => 1 - Math.pow(1 - x, 3);
+const back = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+let filmOn = false, stage = '';
+
+// ---------------------------------------------------------------- le ciel et la constellation du Cancer
+const cv = $('sky'), cx = cv.getContext('2d'), KICK = document.querySelector('.kicker');
+let Wd = 0, Ht = 0, DPR = 1;
+const CNC = [[.47, .10], [.50, .27], [.475, .38], [.40, .53], [.585, .58]];        // ι γ δ α β, proportions de l'écran
+const LINKS = [[0, 1], [1, 2], [2, 3], [2, 4]];
+const rnd = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(17072003);
+const STARS = Array.from({ length: 260 }, () => ({ x: rnd(), y: rnd() * .72, r: .4 + rnd() * 1.3, p: rnd() * 6, f: .4 + rnd() * 1.6 }));
+let lit = 0, drawn = 0, drawT0 = 0, burst = 0, consA = 1;
+function size() { DPR = Math.min(2, window.devicePixelRatio || 1); Wd = innerWidth; Ht = innerHeight; cv.width = Wd * DPR; cv.height = Ht * DPR; }
+size(); addEventListener('resize', size);
+function star(x, y, r, a) {
+  const g = cx.createRadialGradient(x, y, 0, x, y, r * 6); g.addColorStop(0, `rgba(255,236,190,${.9 * a})`); g.addColorStop(.25, `rgba(255,214,140,${.35 * a})`); g.addColorStop(1, 'rgba(255,214,140,0)');
+  cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r * 6, 0, 7); cx.fill();
+  cx.strokeStyle = `rgba(255,248,228,${a})`; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(x - r * 3, y); cx.lineTo(x + r * 3, y); cx.moveTo(x, y - r * 3); cx.lineTo(x, y + r * 3); cx.stroke();
+}
+function frame(ts) {
+  requestAnimationFrame(frame); if (filmOn) return;
+  const t = ts / 1000; cx.setTransform(DPR, 0, 0, DPR, 0, 0); cx.clearRect(0, 0, Wd, Ht);
+  for (const s of STARS) { cx.fillStyle = `rgba(230,236,255,${.25 + .35 * (.5 + .5 * Math.sin(t * s.f + s.p))})`; cx.fillRect(s.x * Wd, s.y * Ht, s.r, s.r); }
+  // la constellation tient dans le ciel au-dessus du texte ; s'il n'y a pas la place (téléphone couché), elle s'estompe
+  const oy = Ht * .04, top = KICK.getBoundingClientRect().top;
+  consA += ((stage && stage !== 'film' ? 0 : 1) - consA) * .04; cx.globalAlpha = consA * (top > 80 ? 1 : .18);
+  const avail = Math.max(120, Math.min(Ht * .62, (top > 60 ? top : Ht * .45) - 26 - oy));
+  const sc = Math.min(Wd * .9, Ht * 1.05, avail * 1.9);
+  const P = CNC.map(([a, b]) => [Wd / 2 + (a - .49) * sc * 1.45, oy + b / .58 * avail]);
+  if (drawn) {                                   // les traits d'or, quand le mot est juste
+    const u = Math.min(1, (t - drawT0) / 2.2);
+    cx.save(); cx.strokeStyle = 'rgba(242,205,134,.9)'; cx.lineWidth = 1.8; cx.shadowColor = 'rgba(242,205,134,.9)'; cx.shadowBlur = 10;
+    LINKS.forEach(([a, b], k) => { const q = Math.max(0, Math.min(1, u * 4 - k)); if (q <= 0) return; cx.beginPath(); cx.moveTo(P[a][0], P[a][1]); cx.lineTo(P[a][0] + (P[b][0] - P[a][0]) * q, P[a][1] + (P[b][1] - P[a][1]) * q); cx.stroke(); });
+    cx.restore();
+  }
+  P.forEach(([x, y], k) => { const on = Math.min(1, lit / N * 5 - k); star(x, y, 2.2 + (on > 0 ? 1.2 * on : 0) + burst * 2, .35 + .65 * Math.max(0, on) + .1 * Math.sin(t * 2 + k)); });
+  if (burst > 0) burst = Math.max(0, burst - .01);
+  cx.globalAlpha = 1;
+}
+requestAnimationFrame(frame);
+
+// ---------------------------------------------------------------- les cases
+const input = $('word'), cells = [...document.querySelectorAll('.b')], msg = $('msg'), boxes = $('boxes');
+const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+const djb2 = s => { let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0; return h; };
+const KEY = 1779472961, N = 7, SHOW = [...'ODYSSÉE'];
+const HINTS = ['Ouvre le recueil au <b>neuvième poème</b>.', 'Lis son <b>tout premier vers</b>.', 'Après l’<b>O _ _ _ _ _ _</b> et ses voiles…'];
+let hintN = 0, tries = 0, opened = false;
+function paint() {
+  const w = norm(input.value).slice(0, N); if (input.value !== w) input.value = w;
+  cells.forEach((c, i) => { c.textContent = opened && w.length === N ? SHOW[i] : (w[i] || ''); c.classList.toggle('cur', !opened && document.activeElement === input && i === Math.min(w.length, N - 1)); });
+  lit = w.length;
+  if (w.length === N && !opened) check(w);
+}
+function check(w) {
+  if (djb2(w) === KEY) return open();
+  tries++; boxes.classList.remove('shake'); void boxes.offsetWidth; boxes.classList.add('shake');
+  msg.innerHTML = tries === 1 ? 'Pas tout à fait… ' + HINTS[0] : (HINTS[Math.min(tries - 1, 2)]);
+  hintN = Math.max(hintN, Math.min(tries, 3));
+  setTimeout(() => { input.value = ''; paint(); }, 650);
+}
+input.addEventListener('input', paint); input.addEventListener('focus', paint); input.addEventListener('blur', paint);
+$('hint').addEventListener('click', () => {
+  if (opened) { prime(); startRite(); return; }                    // visite suivante : « Revoir le film »
+  msg.innerHTML = HINTS[Math.min(hintN, 2)]; hintN = Math.min(hintN + 1, 3); input.focus();
+});
+
+// ---------------------------------------------------------------- le film : trois morceaux, réunis en un seul
+const PARTS = ['toi-1.mp4', 'toi-2.mp4', 'toi-3.mp4'];
+const loadEl = $('load'), pct = $('pct'), v = $('v');
+let blobURL = null;
+function setP(p) { const t = p >= 1 ? 'Le film est prêt.' : `Le film se prépare… ${Math.round(p * 100)} %`; loadEl.textContent = t; pct.textContent = p >= 1 ? '' : `${Math.round(p * 100)} %`; }
+const done = [0, 0, 0], grand = 57975039, sum = () => done.reduce((a, b) => a + b, 0);
+async function fetchPart(url, k) {
+  const r = await fetch(url); if (!r.ok) throw new Error(url);
+  if (!r.body || !r.body.getReader) { const b = await r.blob(); done[k] = b.size; setP(sum() / grand); return b; }
+  const rd = r.body.getReader(), chunks = []; let got = 0;
+  for (;;) { const { done: d, value } = await rd.read(); if (d) break; chunks.push(value); got += value.length; done[k] = got; setP(Math.min(.99, sum() / grand)); }
+  return new Blob(chunks);
+}
+const ready = (async () => {
+  try { const blobs = []; for (let k = 0; k < PARTS.length; k++) blobs.push(await fetchPart(PARTS[k], k)); blobURL = URL.createObjectURL(new Blob(blobs, { type: 'video/mp4' })); setP(1); return true; }
+  catch (e) { loadEl.textContent = 'Le film n’a pas pu se charger. Recharge la page.'; $('op').textContent = loadEl.textContent; pct.textContent = ''; return false; }
+})();
+
+// Les téléphones n'acceptent de lancer un film avec le son qu'après un geste.
+// Au moment où elle tape la dernière lettre, on joue une seconde de silence : le lecteur est alors « déverrouillé »
+// et le film pourra partir tout seul, plus tard, quand elle tournera son téléphone.
+function prime() {
+  if (filmOn) return;
+  try { v.muted = false; const p = v.play(); if (p) p.then(() => { if (!filmOn) { v.pause(); v.currentTime = 0; } }).catch(() => {}); } catch (e) {}
+}
+
+// ---------------------------------------------------------------- la porte s'ouvre
+function open() {
+  opened = true; input.readOnly = true; prime(); input.blur(); cells.forEach((c, i) => { c.classList.add('ok'); c.textContent = SHOW[i]; });
+  msg.innerHTML = '<b>L’Odyssée.</b> Ithaque est en vue.'; drawn = 1; drawT0 = performance.now() / 1000; burst = 1;
+  try { localStorage.setItem('toi-ouvert', '1'); } catch (e) {}
+  setTimeout(startRite, 2600);
+}
+
+// ---------------------------------------------------------------- le rituel : écouteurs, puis téléphone à tourner
+const rite = $('rite'), casque = $('casque'), tel = $('tel'), force = $('force');
+const band = $('band'), band2 = $('band2'), cupL = $('cl'), cupR = $('cr'), cq = $('cq');
+const WL = [...$('wl').children], WR = [...$('wr').children], NOTES = [$('n1'), $('n2')];
+const ph = $('ph'), film = $('film'), play = $('play'), arc = $('arc'), arh = $('arh'), sun = $('sun');
+const LB = band.getTotalLength(), LA = arc.getTotalLength();
+band.style.strokeDasharray = LB; arc.style.strokeDasharray = LA;
+let st0 = 0, tel0 = 0, landSince = 0;
+
+function drawCasque(h) {
+  band.style.strokeDashoffset = LB * (1 - eio(seg(h, 0, .9))); band.style.opacity = seg(h, 0, .12);
+  band2.style.opacity = seg(h, .75, 1.15);
+  const sl = back(seg(h, .45, .9)), sr = back(seg(h, .56, 1.01));
+  cupL.setAttribute('transform', `translate(57 104) scale(${sl}) translate(-57 -104)`);
+  cupR.setAttribute('transform', `translate(183 104) scale(${sr}) translate(-183 -104)`);
+  const sq = 1 - .05 * Math.sin(Math.PI * seg(h, .98, 1.32)), bob = h > 1.32 ? 2.4 * Math.sin((h - 1.32) * 2.1) : 0;
+  cq.setAttribute('transform', `translate(120 ${176 + bob}) scale(${2 - sq} ${sq}) translate(-120 -176)`);
+  const w0 = cl((h - 1.0) / .5);
+  for (let k = 0; k < 3; k++) {
+    const p = h < 1 ? 0 : ((h - 1.0) / 1.6 + k / 3) % 1, s = 1 + 1.9 * p, o = w0 * .9 * Math.sin(Math.PI * p);
+    for (const W of [WL[k], WR[k]]) { W.setAttribute('transform', `translate(41 144) scale(${s}) translate(-41 -144)`); W.style.opacity = o; }
+  }
+  NOTES.forEach((N, i) => {
+    const t0 = 1.5 + i * 1.3; if (h < t0) { N.style.opacity = 0; return; }
+    const p = ((h - t0) / 2.8) % 1, x = i ? 206 : 30;
+    N.setAttribute('transform', `translate(${x + 5 * Math.sin(p * 5) * (i ? -1 : 1)} ${92 - 50 * p}) rotate(${i ? 10 : -10}) scale(${.8 + .3 * Math.sin(Math.PI * p)})`);
+    N.style.opacity = .9 * Math.sin(Math.PI * p);
+  });
+}
+
+function drawTel(tt) {
+  const intro = back(seg(tt, 0, .75)), lt = tt < .9 ? 0 : (tt - .9) % 4.4;
+  // le geste : petite anticipation, rotation d'un quart de tour avec un léger dépassement, tenue, retour
+  let r;
+  if (lt < .62) r = 8 * eio(seg(lt, .35, .62));
+  else if (lt < 3.3) r = 8 - 98 * back(seg(lt, .62, 1.4));
+  else r = -90 + 90 * eio(seg(lt, 3.3, 3.95));
+  // le petit film : il reste droit, puis s'agrandit pour remplir l'écran couché
+  const fs = lt < 3.2 ? 1 + .793 * eo(seg(lt, 1.3, 1.78)) : 1.793 - .793 * eio(seg(lt, 3.2, 3.62));
+  const pl = lt < 3.6 ? 1 - eio(seg(lt, 1.22, 1.48)) : eio(seg(lt, 3.7, 4.0));
+  ph.setAttribute('transform', `translate(0 ${(1 - intro) * 26}) rotate(${r}) scale(${.75 + .25 * intro})`);
+  tel.style.opacity = cl(tt / .4);
+  film.setAttribute('transform', `rotate(${-r}) scale(${fs})`);
+  play.setAttribute('transform', `scale(${Math.max(.001, pl)})`); play.style.opacity = pl;
+  sun.setAttribute('cy', 4 - 4.5 * eio(seg(lt, 1.7, 3.0)) * (1 - eio(seg(lt, 3.3, 3.8))));
+  const a = seg(lt, .62, 1.32), ao = lt < .62 ? 0 : 1 - seg(lt, 1.75, 2.25);
+  arc.style.strokeDashoffset = LA * (1 - eo(a)); arc.style.opacity = ao;
+  arh.style.opacity = ao * cl((a - .82) / .18);
+}
+
+function isLandscape() {
+  const so = screen.orientation;
+  if (so && so.type) return so.type.indexOf('landscape') === 0;
+  if (typeof window.orientation === 'number') return Math.abs(window.orientation) === 90;
+  return innerWidth > innerHeight;
+}
+const needsRotation = () => matchMedia('(pointer: coarse)').matches && !isLandscape();
+
+function say(a, b) {
+  const box = $('rtxt'), first = !box.dataset.on; box.dataset.on = 1;
+  box.animate([{ opacity: first ? 0 : 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px)' }], { duration: first ? 0 : 320, fill: 'forwards' }).finished.then(() => {
+    $('rt').textContent = a; $('rs').textContent = b;
+    box.animate([{ opacity: 0, transform: 'translateY(9px)' }, { opacity: 1, transform: 'none' }], { duration: 700, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'forwards' });
+  });
+}
+
+function riteLoop(ts) {
+  if (stage === 'film' || !stage) return;
+  const t = ts / 1000;
+  drawCasque(t - st0);
+  if (tel0) drawTel(t - tel0);
+  if (stage === 'tel' && t - tel0 > .9) {                     // la détection : le film part quand le téléphone est couché
+    if (isLandscape()) { if (!landSince) landSince = t; else if (t - landSince > .25) gotLandscape(); }
+    else landSince = 0;
+  }
+  requestAnimationFrame(riteLoop);
+}
+
+function startRite() {
+  if (stage) return;
+  stage = 'casque'; st0 = performance.now() / 1000; tel0 = 0;
+  document.body.classList.add('rite'); $('gate').classList.add('away'); rite.classList.add('on');
+  say('Mets tes écouteurs.', 'Le film se regarde avec le son');
+  requestAnimationFrame(riteLoop);
+  setTimeout(() => {
+    if (!needsRotation()) { stage = 'go'; say('Le film commence.', ''); setTimeout(() => launch(false), 1500); return; }
+    stage = 'tel'; tel0 = performance.now() / 1000 + .5; casque.classList.add('small');
+    say('Maintenant, tourne ton téléphone.', 'Le film se lancera tout seul');
+    setTimeout(() => { if (stage === 'tel') { force.hidden = false; requestAnimationFrame(() => force.classList.add('show')); } }, 9000);
+  }, 4800);
+}
+function gotLandscape() { stage = 'go'; force.hidden = true; say('C’est parti.', ''); setTimeout(() => launch(false), 700); }
+force.addEventListener('click', () => launch(true));
+
+// ---------------------------------------------------------------- la salle obscure
+const cin = $('cinema'), over = $('over'), go = $('go');
+function showOver(mode) {
+  over.classList.toggle('hide', !mode);
+  go.hidden = mode !== 'tap';
+  if (mode === 'wait') $('op').textContent = 'Le film arrive…';
+  if (mode === 'tap') { $('op').textContent = 'Touche pour lancer le film.'; pct.textContent = ''; }
+}
+function startFilm() {
+  if (v.src !== blobURL) v.src = blobURL;
+  const p = v.play();
+  (p || Promise.resolve()).then(() => showOver('')).catch(() => showOver('tap'));
+}
+function launch(forced) {
+  if (stage === 'film') return;
+  if (forced) {                                               // rotation verrouillée : plein écran couché, quand le téléphone le permet
+    try { const fs = cin.requestFullscreen || cin.webkitRequestFullscreen; const q = fs && fs.call(cin);
+      if (q && q.then) q.then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape')).catch(() => {}); } catch (e) {}
+  }
+  stage = 'film'; filmOn = true; force.hidden = true;
+  document.body.classList.remove('rite'); document.body.classList.add('film');
+  rite.classList.remove('on'); cin.classList.add('on');
+  if (blobURL) startFilm();
+  else { showOver('wait'); ready.then(ok => { if (ok) startFilm(); }); }
+}
+go.addEventListener('click', () => { if (v.src !== blobURL && blobURL) v.src = blobURL; v.play().then(() => showOver('')).catch(() => {}); });
+cin.addEventListener('pointerdown', () => { if (filmOn && blobURL && v.src === blobURL && !v.controls) v.controls = true; });
+v.addEventListener('pause', () => { if (filmOn && v.src === blobURL) v.controls = true; });
+v.addEventListener('ended', () => { if (filmOn && v.src === blobURL) $('again').hidden = false; });
+$('again').addEventListener('click', () => { $('again').hidden = true; v.currentTime = 0; v.play().catch(() => {}); });
+
+// ---------------------------------------------------------------- si elle revient : la porte est restée ouverte
+try {
+  if (localStorage.getItem('toi-ouvert') === '1') {
+    opened = true; input.readOnly = true; input.value = 'ODYSSEE'; paint(); cells.forEach((c, i) => { c.classList.add('ok'); c.textContent = SHOW[i]; });
+    drawn = 1; drawT0 = -10; msg.innerHTML = 'La porte est restée ouverte.';
+    const h = $('hint'); h.textContent = 'Revoir le film'; h.classList.add('main');
+  }
+} catch (e) {}
+}
+</script>
+</body></html>
